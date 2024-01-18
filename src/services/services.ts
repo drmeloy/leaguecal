@@ -1,35 +1,34 @@
 import axios from "axios";
+import { MatchData, UserDataResponse } from "./types";
 
-const baseUrl = 'https://na1.api.riotgames.com/lol'
-const authToken = 'RGAPI-2248c6cf-34e9-4752-b196-c5b7b27917c2';
+const BASE_NA_URL = "https://na1.api.riotgames.com/lol";
+const BASE_AMERICAS_URL = "https://americas.api.riotgames.com/lol";
+const authToken = process.env.REACT_APP_RIOT_KEY;
 
-export type UserDataResponse = {
-  "id": string;
-  "accountId": string;
-  "puuid": string;
-  "name": string;
-  "profileIconId": number;
-  "revisionDate": number;
-  "summonerLevel": number;
-}
 
-export type MatchData = {
-  info: {
-    gameCreation: number;
-    gameDuration: number;
-    gameEndTimestamp?: number;
-  }
-}
 
-export const getAccountPuuid = (summonerName: string): Promise<UserDataResponse> => axios.get(`${baseUrl}/summoner/v4/summoners/by-name/${summonerName}?api_key=${authToken}`)
-.then(res => res.data)
-.catch(err => console.log('Err in getAccountPuuid: ', err))
-;
+export const getAccountPuuid = (
+  summonerName: string
+): Promise<UserDataResponse> =>
+  axios
+    .get(
+      `${BASE_NA_URL}/summoner/v4/summoners/by-name/${summonerName}?api_key=${authToken}`
+    )
+    .then((res) => res.data)
+    .catch((err) => console.warn("Err in getAccountPuuid: ", err));
 
-export const getMatches = (puuid: string): Promise<string[]> => axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?api_key=${authToken}`)
-.then(res => res.data)
-.catch(err => console.log('Err in getMatches: ', err))
+export const getMatchIds = (puuid: string): Promise<string[]> =>
+  axios
+    .get(
+      `${BASE_AMERICAS_URL}/match/v5/matches/by-puuid/${puuid}/ids?api_key=${authToken}&count=3`
+    )
+    .then((res) => res.data)
+    .catch((err) => console.warn("Err in getMatches: ", err));
 
-export const getDetails = (matchId: string): Promise<MatchData> => axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${authToken}`)
-.then(res => res.data)
-.catch(err => console.log('Err in getDetails: ', err))
+export const getMatchDetails = (matchId: string): Promise<MatchData> =>
+  axios
+    .get(
+      `${BASE_AMERICAS_URL}/match/v5/matches/${matchId}?api_key=${authToken}`
+    )
+    .then((res) => res.data)
+    .catch((err) => console.warn("Err in getDetails: ", err));

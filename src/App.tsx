@@ -1,53 +1,55 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { MatchData, getAccountPuuid, getDetails, getMatches } from './services/services';
+import { getAccountPuuid, getMatchDetails, getMatchIds } from './services';
+
+type CalendarDictionary = Record<string, number>
 
 function App() {
-  const [summonerName, setSummonerName] = useState('');
-  const [puuid, setPuuid] = useState('');
-  const [matchHistory, setMatchHistory] = useState<string[]>([]);
-  const [matchData, setMatchData] = useState<MatchData>();
-  const [matchLength, setMatchLength] = useState('');
-  const [matchDate, setMatchDate] = useState('');
+  const [summonerName, setSummonerName] = useState('imthedamage');
+  const [summonerPuuid, setSummonerPuuid] = useState('');
+  const [calendarArray, setCalendarArray] = useState<[string, number][]>([]);
 
   const getPuuid = async (userName: string) => {
     const acctData = await getAccountPuuid(userName);
-    if (acctData.puuid) setPuuid(acctData.puuid);
+    if (acctData.puuid) setSummonerPuuid(acctData.puuid);
   }
 
-  const getMatchHistory = async (id: string) => {
-    const matches = await getMatches(id);
-    if (matches.length) setMatchHistory(matches)
-  }
-
-  const getMatchDetails = async (matchId: string) => {
-    const details = await getDetails(matchId);
-    console.log(details)
-    if (details) setMatchData(details)
-  }
-
-  useEffect(() => {
-    if (puuid) getMatchHistory(puuid);
-  }, [puuid]);
-
-  useEffect(() => {
-    if (matchData) {
-      const date = new Date(matchData.info.gameCreation);
-      setMatchDate(date.toDateString());
-      const time = Math.ceil(matchData.info.gameDuration / 60);
-      setMatchLength(`${time} minutes`);
+  const getMatchCalendarData = async (puuid: string) => {
+    const matchIds = await getMatchIds(puuid);
+    if (matchIds.length) {
+      const calendarData = Object.entries(await matchIds.reduce((acc, curr) => {
+        getMatchDetails(curr).then(({ info }) => {
+          const date = new Date(info.gameCreation).toLocaleDateString();
+          const time = Math.ceil(info.gameDuration / 60);
+          if (!acc[date]) acc[date] = time;
+          else acc[date] += time;
+        })
+        return acc;
+      }, {} as CalendarDictionary));
+      console.log('Calendar data: ', calendarData)
+      // setCalendarArray(Object.entries(calendarData));
     }
-  }, [matchData])
+  }
+
+  useEffect(() => {
+    if (summonerPuuid) getMatchCalendarData(summonerPuuid);
+  }, [summonerPuuid]);
+
+  useEffect(() => {
+    console.log('Calendar array: ', calendarArray)
+  }, [calendarArray.length])
 
   return (
     <div className="App">
       <p>Enter summoner name:</p>
       <input value={summonerName} onChange={({ target }) => setSummonerName(target.value)} />
       <button onClick={() => getPuuid(summonerName)}>Go</button>
-      {puuid && <p>Puuid: {puuid}</p>}
-      {matchHistory.length > 0 && <div>Matches: {matchHistory.map(match => <div key={match} onClick={() => getMatchDetails(match)}>{match}</div>)}</div>}
-      {matchDate && <p>Match date: {matchDate}</p>}
-      {matchLength && <p>Match length: {matchLength}</p>}
+      {summonerPuuid && <p>Summoner Puuid: {summonerPuuid}</p>}
+      {calendarArray.length > 0 && calendarArray.map(date => (
+        <div>
+          <p>{date[0]}: {date[1]} minutes</p>
+        </div>
+      ))}
     </div>
   );
 }
