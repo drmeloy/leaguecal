@@ -16,37 +16,28 @@ function App() {
 
   const getMatchCalendarData = async (puuid: string) => {
     const matchIds = await getMatchIds(puuid);
-    if (matchIds.length) {
-      const calendarData = Object.entries(await matchIds.reduce((acc, curr) => {
-        getMatchDetails(curr).then(({ info }) => {
-          const date = new Date(info.gameCreation).toLocaleDateString();
-          const time = Math.ceil(info.gameDuration / 60);
-          if (!acc[date]) acc[date] = time;
-          else acc[date] += time;
-        })
-        return acc;
-      }, {} as CalendarDictionary));
-      console.log('Calendar data: ', calendarData)
-      // setCalendarArray(Object.entries(calendarData));
-    }
+    const calendarData: CalendarDictionary = {};
+    await Promise.all(matchIds.map(async matchId => {
+      const { info } = await getMatchDetails(matchId);
+      const date = new Date(info.gameCreation).toLocaleDateString();
+      const time = Math.ceil(info.gameDuration / 60);
+      if (!calendarData[date]) calendarData[date] = time;
+      else calendarData[date] += time;
+    }));
+    setCalendarArray(Object.entries(calendarData));
   }
 
   useEffect(() => {
     if (summonerPuuid) getMatchCalendarData(summonerPuuid);
   }, [summonerPuuid]);
 
-  useEffect(() => {
-    console.log('Calendar array: ', calendarArray)
-  }, [calendarArray.length])
-
   return (
     <div className="App">
       <p>Enter summoner name:</p>
       <input value={summonerName} onChange={({ target }) => setSummonerName(target.value)} />
       <button onClick={() => getPuuid(summonerName)}>Go</button>
-      {summonerPuuid && <p>Summoner Puuid: {summonerPuuid}</p>}
       {calendarArray.length > 0 && calendarArray.map(date => (
-        <div>
+        <div key={Math.random()}>
           <p>{date[0]}: {date[1]} minutes</p>
         </div>
       ))}

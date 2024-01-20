@@ -20,7 +20,7 @@ export const getAccountPuuid = (
 export const getMatchIds = (puuid: string): Promise<string[]> =>
   axios
     .get(
-      `${BASE_AMERICAS_URL}/match/v5/matches/by-puuid/${puuid}/ids?api_key=${authToken}&count=3`
+      `${BASE_AMERICAS_URL}/match/v5/matches/by-puuid/${puuid}/ids?api_key=${authToken}&count=10`
     )
     .then((res) => res.data)
     .catch((err) => console.warn("Err in getMatches: ", err));
